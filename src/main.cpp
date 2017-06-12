@@ -3,6 +3,7 @@
 #include "json.hpp"
 #include <math.h>
 #include "ukf.h"
+#include "hunter.hpp"
 
 using namespace std;
 
@@ -31,11 +32,11 @@ int main()
 
   // Create a UKF instance
   UKF ukf;
-  
+  Hunter hunter;
   double target_x = 0.0;
   double target_y = 0.0;
 
-  h.onMessage([&ukf,&target_x,&target_y](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf,&target_x,&target_y, &hunter](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -108,6 +109,12 @@ int main()
 	  target_x = ukf.x_[0];
 	  target_y = ukf.x_[1];
 
+    VectorXd hunter_xyh = VectorXd(3);
+    hunter_xyh << hunter_x, hunter_y, hunter_heading;
+    double heading_difference;
+    hunter.FindHeading(hunter_xyh, ukf.x_, timestamp_R, &heading_difference);
+
+        /*
     	  double heading_to_target = atan2(target_y - hunter_y, target_x - hunter_x);
     	  while (heading_to_target > M_PI) heading_to_target-=2.*M_PI; 
     	  while (heading_to_target <-M_PI) heading_to_target+=2.*M_PI;
@@ -115,7 +122,7 @@ int main()
     	  double heading_difference = heading_to_target - hunter_heading;
     	  while (heading_difference > M_PI) heading_difference-=2.*M_PI; 
     	  while (heading_difference <-M_PI) heading_difference+=2.*M_PI;
-
+        */
     	  double distance_difference = sqrt((target_y - hunter_y)*(target_y - hunter_y) + (target_x - hunter_x)*(target_x - hunter_x));
 
           json msgJson;
